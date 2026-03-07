@@ -42,8 +42,6 @@ app.get("/test-db", async (req, res) => {
 // Huwag i-hardcode ang 3306 o 3000. Gamitin ang process.env.PORT.
 const PORT = process.env.PORT || 10000;
 
-// Binding sa '0.0.0.0' ay required para ma-detect ng Render ang port
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server is live on port ${PORT}`);
-  console.log(`🔗 Test your API at: https://backend-1-k3zu.onrender.com/test-db`);
+  console.log(`🚀 Server is live at port ${PORT}`);
 });
