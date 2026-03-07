@@ -3,10 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Mas mainam gamitin ang DATABASE_URL o MYSQL_URL para sa Railway
+// Gamitin ang DATABASE_URL o MYSQL_URL environment variable mula sa Railway
 const connectionString = process.env.DATABASE_URL || process.env.MYSQL_URL;
-
-console.log("🚀 Connecting to database...");
 
 export const db = mysql.createPool({
   uri: connectionString,
