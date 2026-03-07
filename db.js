@@ -3,16 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Gamitin ang DATABASE_URL o MYSQL_URL environment variable mula sa Railway
-const connectionString = process.env.DATABASE_URL || process.env.MYSQL_URL;
+// DEBUGGING LOGS: Run node server.js and check your terminal!
+console.log("Attempting to connect to host:", process.env.DB_HOST);
+console.log("Using Port:", process.env.DB_PORT);
 
 export const db = mysql.createPool({
-  uri: connectionString,
-  // Mahalaga ito para sa Render-to-Railway connection
-  ssl: {
-    rejectUnauthorized: false
-  },
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  host: process.env.DB_HOST,      // If this is undefined, it defaults to localhost
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
 });
