@@ -3,14 +3,16 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// DEBUGGING LOGS: Run node server.js and check your terminal!
-console.log("Attempting to connect to host:", process.env.DB_HOST);
-console.log("Using Port:", process.env.DB_PORT);
+// Babasahin nito ang DATABASE_URL na nilagay mo sa Render Environment Variables
+const connectionString = process.env.DATABASE_URL;
 
 export const db = mysql.createPool({
-  host: process.env.DB_HOST,      // If this is undefined, it defaults to localhost
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+  // GAMITIN ANG uri PROPERTY PARA SA FULL CONNECTION STRING
+  uri: connectionString, 
+  ssl: {
+    rejectUnauthorized: false // Mahalaga ito para sa koneksyon sa Railway
+  },
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
