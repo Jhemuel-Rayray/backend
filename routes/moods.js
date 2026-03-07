@@ -6,7 +6,6 @@ const router = express.Router();
 // Get all moods
 router.get("/", async (req, res) => {
   try {
-    // TAMA: Ginagamit ang 'mood_entries' table
     const [results] = await db.query("SELECT * FROM mood_entries ORDER BY created_at DESC");
     res.json(results);
   } catch (err) {
@@ -16,21 +15,19 @@ router.get("/", async (req, res) => {
 
 // Add a new mood
 router.post("/", async (req, res) => {
-  // Kinukuha ang data mula sa Frontend (MoodForm.vue)
-  // Siguraduhin na 'username' at 'reflection' ang ipinapadala ng iyong frontend
-  const { username, reflection } = req.body; 
+  // accept both sets of keys the frontend might send
+  const username = req.body.username || req.body.name;
+  const reflection = req.body.reflection || req.body.mood;
 
   if (!username || !reflection) {
     return res.status(400).json({ error: "Name and reflection are required" });
   }
 
   try {
-    // TAMA: Gagamitin ang 'user_id' at 'mood_text' columns base sa iyong Railway table
     await db.query(
-      "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)", 
+      "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
       [username, reflection]
     );
-    
     res.status(201).json({ message: "Mood added successfully!" });
   } catch (err) {
     console.error("Database Error:", err.message);
