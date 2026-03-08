@@ -3,38 +3,60 @@ import { db } from "../db.js";
 
 const router = express.Router();
 
-// Get all moods
+/**
+ * GET ALL MOODS
+ * Path: /api/moods (if prefixed in server.js)
+ */
 router.get("/", async (req, res) => {
   try {
-    // We use AS to make sure the database columns match your Vue m.full_name and m.mood_text
+    // We select user_id AS full_name to match your Vue template 'm.full_name'
     const [results] = await db.query(
-      "SELECT user_id AS full_name, mood_text FROM mood_entries ORDER BY created_at DESC"
+      "SELECT id, user_id AS full_name, mood_text, created_at FROM mood_entries ORDER BY created_at DESC"
     );
-    res.json(results);
+    
+    // Always return an array, even if empty
+    res.json(results || []);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("GET Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch reflections from database." });
   }
 });
 
-// Add a new mood
+/**
+ * ADD NEW MOOD
+ * Path: /api/moods
+ */
 router.post("/", async (req, res) => {
-  // Capture the names you are sending from MoodForm.vue
+  // These keys now match the object sent from MoodForm.vue
   const { name, reflection } = req.body;
 
+  // Validation
   if (!name || !reflection) {
     return res.status(400).json({ error: "Name and reflection are required" });
   }
 
   try {
-    // Make sure your table 'mood_entries' has these column names!
-    await db.query(
+    // IMPORTANT: Ensure 'user_id' in MySQL is VARCHAR/TEXT to store the name string
+    const [result] = await db.query(
       "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
       [name, reflection]
     );
-    res.status(201).json({ message: "Mood added successfully!" });
+    
+    res.status(201).json({ 
+      message: "Mood added successfully!",
+      id: result.insertId 
+    });
   } catch (err) {
     console.error("Database Error:", err.message);
-    res.status(500).json({ error: "Database error. Check column types!" });
+    
+    // Custom error message for the common "Data truncated" or "Incorrect integer value" error
+    if (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
+      return res.status(500).json({ 
+        error: "Database setup error: user_id column must be a string/VARCHAR, not an integer." 
+      });
+    }
+
+    res.status(500).json({ error: "Could not save your reflection to the database." });
   }
 });
 
