@@ -6,7 +6,10 @@ const router = express.Router();
 // Get all moods
 router.get("/", async (req, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM mood_entries ORDER BY created_at DESC");
+    // We use AS to make sure the database columns match your Vue m.full_name and m.mood_text
+    const [results] = await db.query(
+      "SELECT user_id AS full_name, mood_text FROM mood_entries ORDER BY created_at DESC"
+    );
     res.json(results);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -15,23 +18,23 @@ router.get("/", async (req, res) => {
 
 // Add a new mood
 router.post("/", async (req, res) => {
-  // accept both sets of keys the frontend might send
-  const username = req.body.username || req.body.name;
-  const reflection = req.body.reflection || req.body.mood;
+  // Capture the names you are sending from MoodForm.vue
+  const { name, reflection } = req.body;
 
-  if (!username || !reflection) {
+  if (!name || !reflection) {
     return res.status(400).json({ error: "Name and reflection are required" });
   }
 
   try {
+    // Make sure your table 'mood_entries' has these column names!
     await db.query(
       "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
-      [username, reflection]
+      [name, reflection]
     );
     res.status(201).json({ message: "Mood added successfully!" });
   } catch (err) {
     console.error("Database Error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Database error. Check column types!" });
   }
 });
 
