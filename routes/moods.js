@@ -5,20 +5,19 @@ const router = express.Router();
 
 /**
  * GET ALL MOODS
- * Path: /api/moods (if prefixed in server.js)
+ * Path: /api/moods
  */
 router.get("/", async (req, res) => {
   try {
-    // We select user_id AS full_name to match your Vue template 'm.full_name'
+    // Aliasing user_id as full_name to match your Vue template requirements
     const [results] = await db.query(
       "SELECT id, user_id AS full_name, mood_text, created_at FROM mood_entries ORDER BY created_at DESC"
     );
     
-    // Always return an array, even if empty
     res.json(results || []);
   } catch (err) {
     console.error("GET Error:", err.message);
-    res.status(500).json({ error: "Failed to fetch reflections from database." });
+    res.status(500).json({ error: "Failed to fetch reflections." });
   }
 });
 
@@ -29,11 +28,17 @@ router.get("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    await db.query("DELETE FROM mood_entries WHERE id = ?", [id]);
+    const [result] = await db.query("DELETE FROM mood_entries WHERE id = ?", [id]);
+    
+    // Check if something was actually deleted
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Reflection not found." });
+    }
+
     res.json({ message: "Reflection removed successfully" });
   } catch (err) {
     console.error("DELETE Error:", err.message);
-    res.status(500).json({ error: "Could not delete the reflection." });
+    res.status(500).json({ error: "Could not delete the reflection from the database." });
   }
 });
 
@@ -42,16 +47,13 @@ router.delete("/:id", async (req, res) => {
  * Path: /api/moods
  */
 router.post("/", async (req, res) => {
-  // These keys now match the object sent from MoodForm.vue
   const { name, reflection } = req.body;
 
-  // Validation
   if (!name || !reflection) {
     return res.status(400).json({ error: "Name and reflection are required" });
   }
 
   try {
-    // IMPORTANT: Ensure 'user_id' in MySQL is VARCHAR/TEXT to store the name string
     const [result] = await db.query(
       "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
       [name, reflection]
@@ -64,14 +66,13 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("Database Error:", err.message);
     
-    // Custom error message for the common "Data truncated" or "Incorrect integer value" error
     if (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
       return res.status(500).json({ 
-        error: "Database setup error: user_id column must be a string/VARCHAR, not an integer." 
+        error: "Database schema error: user_id must be VARCHAR, not INT." 
       });
     }
 
-    res.status(500).json({ error: "Could not save your reflection to the database." });
+    res.status(500).json({ error: "Could not save your reflection." });
   }
 });
 

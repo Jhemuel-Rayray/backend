@@ -5,27 +5,32 @@ import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
 import aiRoutes from "./routes/ai.js";
 
-app.use("/api/ai", aiRoutes);
-
+// 1. Load environment variables FIRST
 dotenv.config();
 
 const app = express();
 
-// 1. Middlewares - Mahalaga ang pagkakasunod-sunod
-app.use(cors()); // Payagan ang GitHub Pages
-app.use(express.json()); // Para mabasa ang JSON bodies
+// 2. Middlewares
+// Explicitly allowing DELETE and OPTIONS for GitHub Pages compatibility
+app.use(cors({
+  origin: "*", 
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
-// 2. Routes
+app.use(express.json());
+
+// 3. Routes
 app.use("/api/moods", moodRoutes);
+app.use("/api/ai", aiRoutes); // Inayos ang posisyon nito
 
-// 3. Health Check / Test Routes
+// 4. Health Check / Test Routes
 app.get("/", (req, res) => {
   res.send("✅ Backend is running and connected to Render!");
 });
 
 app.get("/test-db", async (req, res) => {
   try {
-    // Check if db pool exists
     if (!db) {
       throw new Error("Database connection pool is not initialized.");
     }
@@ -41,9 +46,8 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// 4. Server Listener - CONFIG FOR RENDER
-// Huwag i-hardcode ang 3306 o 3000. Gamitin ang process.env.PORT.
-const PORT = process.env.PORT || 10000;
+// 5. Server Listener
+const PORT = process.env.PORT || 1000; // Render usually uses 1000 or 10000
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is live at port ${PORT}`);
