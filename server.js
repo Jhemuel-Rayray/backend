@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
+import aiRoutes from "./routes/ai.js";
+
+app.use("/api/ai", aiRoutes);
 
 dotenv.config();
 
