@@ -3,23 +3,18 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router = express.Router();
 
-// Initialize the API with your key from Render Environment Variables
+// Initialize
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/analyze", async (req, res) => {
   const { text } = req.body;
 
-  if (!text) {
-    return res.status(400).json({ suggestion: "I'm listening. How are you feeling?" });
-  }
-
   try {
-    // We use 'gemini-1.5-flash' which is the fastest model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // FIX: Using the absolute model path prevents the 404 versioning error
+    // If 'gemini-1.5-flash' fails, we immediately catch and try 'gemini-pro'
+    const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
 
-    const prompt = `The user is reflecting on their mood: "${text}". 
-    Provide a very short, one-sentence empathetic response or supportive advice. 
-    Keep it under 20 words.`;
+    const prompt = `The user is feeling: "${text}". Give a very short, 1-sentence empathetic response.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -27,13 +22,19 @@ router.post("/analyze", async (req, res) => {
 
     res.json({ suggestion });
   } catch (error) {
-    console.error("AI Backend Error:", error);
-    // Fallback response so the UI doesn't break if the API fails
-    res.status(500).json({ 
-      suggestion: "Remember to breathe, stay grounded, and take things one step at a time." 
-    });
+    console.error("AI Primary Model Error:", error.message);
+    
+    // SECONDARY FALLBACK: Try the classic Gemini Pro if Flash is unavailable in your region
+    try {
+      const backupModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const result = await backupModel.generateContent(`Support this person: ${text}`);
+      const response = await result.response;
+      res.json({ suggestion: response.text() });
+    } catch (fallbackError) {
+      console.error("AI Fallback Error:", fallbackError.message);
+      res.status(500).json({ suggestion: "Take a deep breath. You are doing your best." });
+    }
   }
 });
 
-// THIS WAS THE CAUSE OF YOUR RECENT CRASH
 export default router;
