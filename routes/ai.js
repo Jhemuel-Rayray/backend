@@ -8,7 +8,7 @@ router.post("/analyze", async (req, res) => {
   const { text } = req.body;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     const prompt = `The user is feeling: "${text}". Give a very short, 1-sentence empathetic response or piece of advice.`;
 
     const result = await model.generateContent(prompt);
