@@ -3,36 +3,34 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router = express.Router();
 
-// Initialize
+// The key remains the same, but the models have moved to the Gemini 3 family
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/analyze", async (req, res) => {
   const { text } = req.body;
 
   try {
-    // FIX: Using the absolute model path prevents the 404 versioning error
-    // If 'gemini-1.5-flash' fails, we immediately catch and try 'gemini-pro'
-    const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+    // 1. AS OF MARCH 2026: 'gemini-3.1-flash-lite' is the new standard for fast insights.
+    // If that's too new, 'gemini-3-flash' is the stable workhorse.
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
 
-    const prompt = `The user is feeling: "${text}". Give a very short, 1-sentence empathetic response.`;
+    const prompt = `User reflection: "${text}". Give a very short, 1-sentence supportive response (max 15 words).`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const suggestion = response.text();
-
-    res.json({ suggestion });
-  } catch (error) {
-    console.error("AI Primary Model Error:", error.message);
     
-    // SECONDARY FALLBACK: Try the classic Gemini Pro if Flash is unavailable in your region
+    res.json({ suggestion: response.text() });
+  } catch (error) {
+    console.error("AI Error:", error.message);
+    
+    // 2. FALLBACK: If Gemini 3 is overloaded, use Gemini 2.5 which is still active.
     try {
-      const backupModel = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await backupModel.generateContent(`Support this person: ${text}`);
+      const backup = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await backup.generateContent(`Be supportive: ${text}`);
       const response = await result.response;
       res.json({ suggestion: response.text() });
-    } catch (fallbackError) {
-      console.error("AI Fallback Error:", fallbackError.message);
-      res.status(500).json({ suggestion: "Take a deep breath. You are doing your best." });
+    } catch (err) {
+      res.json({ suggestion: "Take a deep breath. You are doing great today." });
     }
   }
 });
