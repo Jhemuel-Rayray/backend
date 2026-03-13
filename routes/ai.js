@@ -11,16 +11,15 @@ router.post("/analyze", async (req, res) => {
 
   try {
     // Explicitly request the model without 'latest' and ensure v1 is used
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      apiVersion: 'v1' // Add this line!
-    });
+    // Inside your /analyze route:
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const prompt = `The user is feeling: "${text}". Give a very short, 1-sentence empathetic response or piece of advice.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const suggestion = response.text();
+    
 
     res.json({ suggestion });
   } catch (error) {
