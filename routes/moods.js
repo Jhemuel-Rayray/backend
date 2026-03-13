@@ -23,6 +23,21 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * DELETE A MOOD
+ * Path: /api/moods/:id
+ */
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query("DELETE FROM mood_entries WHERE id = ?", [id]);
+    res.json({ message: "Reflection removed successfully" });
+  } catch (err) {
+    console.error("DELETE Error:", err.message);
+    res.status(500).json({ error: "Could not delete the reflection." });
+  }
+});
+
+/**
  * ADD NEW MOOD
  * Path: /api/moods
  */
