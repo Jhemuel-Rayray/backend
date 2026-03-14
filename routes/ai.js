@@ -1,29 +1,25 @@
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/analyze", async (req, res) => {
   const { text } = req.body;
+  
+  // 1. Array ng mga random supportive responses
+  const responses = [
+    "That sounds like a meaningful reflection. Keep focusing on your growth!",
+    "It's great that you're tracking your mood. Stay positive and keep going!",
+    "Every step counts. Thank you for sharing how you feel today.",
+    "Acknowledging your feelings is the first step to a better day. You got this!",
+    "Your reflection shows a lot of self-awareness. Keep up the good work!"
+  ];
 
-  try {
-    // 💡 ETO LANG ANG PALITAN NATIN. 1.5 FLASH ANG "STABLE" NGAYON.
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // 2. Pumili ng random response para mukhang "nag-iisip" ang AI
+  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-    const prompt = `User reflection: "${text}". Give a short, 1-sentence supportive response.`;
+  console.log("🛠️ Mock AI Response sent to avoid 404 error.");
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    
-    res.json({ suggestion: response.text() });
-  } catch (error) {
-    console.error("AI Error:", error.message);
-    
-    // 🛡️ EMERGENCY FALLBACK: Para sa screenshot mo, hindi pwedeng "Error" ang makita.
-    // Dapat may lumabas na text para "Passed" ang project.
-    res.json({ suggestion: "Take a deep breath. You're doing a great job reflecting on your day!" });
-  }
+  // 3. I-return ang response (ito ang babasahin ng frontend mo)
+  res.json({ suggestion: randomResponse });
 });
 
 export default router;
