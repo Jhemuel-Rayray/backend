@@ -21,27 +21,16 @@ app.post("/mood", async (req, res) => {
   console.log("POST /mood request received");
   console.log("Request body:", req.body);
 
-  try {
-    const mood = req.body.mood;
-    
-    // MALI ITO: 'mood_log' table ay malamang hindi nage-exist 
-    // at 'mood' column lang ang nilalagyan imbis na 'mood_text'
-    const [result] = await db.query(
-      "INSERT INTO mood_log (mood) VALUES (?)",
-      [mood]
-    );
+  const mood = req.body.mood;
+  const result = await db.query(
+    "INSERT INTO mood_log (mood) VALUES (?)",
+    [mood]
+  );
 
-    console.log("Database insert result:", result);
-    res.json({ message: "Mood saved successfully" });
-  } catch (err) {
-    // DITO LALABAS YUNG ERROR SA TERMINAL MO
-    console.error("❌ BACKEND ERROR FOR DEBUGGING:", err.message);
-    res.status(500).json({ 
-      error: "Backend Error: Table or Column not found",
-      details: err.message 
-    });
-  }
+  console.log("Database insert result:", result);
+  res.json({ message: "Mood saved successfully" });
 });
+
 
 app.get("/", (req, res) => {
   res.send("✅ Backend is running!");
