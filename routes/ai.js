@@ -2,30 +2,36 @@ import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router = express.Router();
+
+// The key remains the same, but the models have moved to the Gemini 3 family
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/analyze", async (req, res) => {
   const { text } = req.body;
 
   try {
-    // DEBUG UPDATE: 
-    // Minsan Sir, yung library version natin is nag-eexpect ng 'models/gemini-1.5-flash' 
-    // imbis na 'gemini-1.5-flash' lang. Sinisiguro nito na hindi siya mag-404 sa v1beta.
-    const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+    // 1. AS OF MARCH 2026: 'gemini-3.1-flash-lite' is the new standard for fast insights.
+    // If that's too new, 'gemini-3-flash' is the stable workhorse.
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
 
-    const prompt = `User said: "${text}". Give a very short, one-sentence empathetic reply.`;
+    const prompt = `User reflection: "${text}". Give a very short, 1-sentence supportive response (max 15 words).`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const suggestion = response.text();
-
-    res.json({ suggestion });
-  } catch (error) {
-    // Dito natin mahuhuli kung bakit ayaw pa rin
-    console.error("❌ FINAL AI DEBUG LOG:", error.message);
     
-    // Safety fallback para hindi mag-crash ang UI ni Sir
-    res.json({ suggestion: "Take a deep breath. Everything will be okay." });
+    res.json({ suggestion: response.text() });
+  } catch (error) {
+    console.error("AI Error:", error.message);
+    
+    // 2. FALLBACK: If Gemini 3 is overloaded, use Gemini 2.5 which is still active.
+    try {
+      const backup = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await backup.generateContent(`Be supportive: ${text}`);
+      const response = await result.response;
+      res.json({ suggestion: response.text() });
+    } catch (err) {
+      res.json({ suggestion: "Take a deep breath. You are doing great today." });
+    }
   }
 });
 
