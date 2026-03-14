@@ -3,8 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
-import aiRoutes from "./services/aiService.js"; // Siguraduhing tama ang path nito
-import aiRouteHandler from "./routes/ai.js";
+import aiRoutes from "./routes/ai.js";
 
 // 1. Load environment variables FIRST
 dotenv.config();
@@ -20,19 +19,20 @@ app.use(cors({
 
 app.use(express.json());
 
-// 3. Routes
+// 3. Existing Routes
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRouteHandler);
+app.use("/api/ai", aiRoutes);
 
 // --- ERROR ROUTE PARA SA DEBUGGING NI SIR ---
-// Nilagay ko ito bago ang health checks para madaling mahanap
+// Pinagawa ni Sir: Dapat mag-log at mag-insert sa 'mood_log'
 app.post("/mood", async (req, res) => {
   console.log("POST /mood request received");
   console.log("Request body:", req.body);
 
   try {
     const mood = req.body.mood;
-    // Ito ang mag-ko-cause ng error dahil malamang walang 'mood_log' table sa DB mo
+    
+    // Ito ang mag-ko-cause ng error (Table 'mood_log' doesn't exist)
     const [result] = await db.query(
       "INSERT INTO mood_log (mood) VALUES (?)",
       [mood]
@@ -41,11 +41,14 @@ app.post("/mood", async (req, res) => {
     console.log("Database insert result:", result);
     res.json({ message: "Mood saved successfully" });
   } catch (err) {
-    // DITO LALABAS YUNG ERROR NA I-SCREENSHOT MO SA TERMINAL
+    // DITO LALABAS YUNG SCREENSHOT MO SA TERMINAL
     console.log("-----------------------------------------");
     console.error("❌ BACKEND ERROR FOR DEBUGGING:", err.message);
     console.log("-----------------------------------------");
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: "Database Error", 
+      details: err.message 
+    });
   }
 });
 // --- END NG ERROR ROUTE ---
