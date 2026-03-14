@@ -5,32 +5,27 @@ import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
 import aiRoutes from "./routes/ai.js";
 
-// 1. Load environment variables FIRST
 dotenv.config();
-
 const app = express();
 
-// 2. Middlewares
-app.use(cors({
-  origin: "*", 
-  methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// 3. Routes (Yung mga existing routes mo)
+// 1. Existing Routes
 app.use("/api/moods", moodRoutes);
 app.use("/api/ai", aiRoutes);
 
-// --- START NG DEBUG CODE NI SIR ---
+// 2. ERROR ROUTE (Ito yung i-dedebug niyo ni Sir)
+// Sinadya nating mali ito para lumabas yung Error sa Terminal
 app.post("/mood", async (req, res) => {
   console.log("POST /mood request received");
   console.log("Request body:", req.body);
 
   try {
     const mood = req.body.mood;
-    // Tandaan: Siguraduhin na 'mood_log' ang table name mo sa DB
+    
+    // MALI ITO: 'mood_log' table ay malamang hindi nage-exist 
+    // at 'mood' column lang ang nilalagyan imbis na 'mood_text'
     const [result] = await db.query(
       "INSERT INTO mood_log (mood) VALUES (?)",
       [mood]
@@ -39,37 +34,20 @@ app.post("/mood", async (req, res) => {
     console.log("Database insert result:", result);
     res.json({ message: "Mood saved successfully" });
   } catch (err) {
-    console.error("Debug Route Error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-// --- END NG DEBUG CODE NI SIR ---
-
-// 4. Health Check / Test Routes
-app.get("/", (req, res) => {
-  res.send("✅ Backend is running and connected to Render!");
-});
-
-app.get("/test-db", async (req, res) => {
-  try {
-    if (!db) {
-      throw new Error("Database connection pool is not initialized.");
-    }
-    const [rows] = await db.query("SELECT 1 as connected");
-    res.json({ 
-      status: "Success", 
-      message: "Connected to Railway MySQL!", 
-      data: rows 
+    // DITO LALABAS YUNG ERROR SA TERMINAL MO
+    console.error("❌ BACKEND ERROR FOR DEBUGGING:", err.message);
+    res.status(500).json({ 
+      error: "Backend Error: Table or Column not found",
+      details: err.message 
     });
-  } catch (err) {
-    console.error("❌ DB Test Error:", err.message);
-    res.status(500).json({ status: "Error", error: err.message });
   }
 });
 
-// 5. Server Listener
-const PORT = process.env.PORT || 1000;
+app.get("/", (req, res) => {
+  res.send("✅ Backend is running!");
+});
 
+const PORT = process.env.PORT || 1000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is live at port ${PORT}`);
 });
