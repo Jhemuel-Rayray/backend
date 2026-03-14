@@ -11,6 +11,7 @@ dotenv.config();
 const app = express();
 
 // 2. Middlewares
+// Explicitly allowing DELETE and OPTIONS for GitHub Pages compatibility
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -19,39 +20,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// 3. Existing Routes
+// 3. Routes
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRoutes);
-
-// --- ERROR ROUTE PARA SA DEBUGGING NI SIR ---
-// Pinagawa ni Sir: Dapat mag-log at mag-insert sa 'mood_log'
-app.post("/mood", async (req, res) => {
-  console.log("POST /mood request received");
-  console.log("Request body:", req.body);
-
-  try {
-    const mood = req.body.mood;
-    
-    // Ito ang mag-ko-cause ng error (Table 'mood_log' doesn't exist)
-    const [result] = await db.query(
-      "INSERT INTO mood_log (mood) VALUES (?)",
-      [mood]
-    );
-
-    console.log("Database insert result:", result);
-    res.json({ message: "Mood saved successfully" });
-  } catch (err) {
-    // DITO LALABAS YUNG SCREENSHOT MO SA TERMINAL
-    console.log("-----------------------------------------");
-    console.error("❌ BACKEND ERROR FOR DEBUGGING:", err.message);
-    console.log("-----------------------------------------");
-    res.status(500).json({ 
-      error: "Database Error", 
-      details: err.message 
-    });
-  }
-});
-// --- END NG ERROR ROUTE ---
+app.use("/api/ai", aiRoutes); // Inayos ang posisyon nito
 
 // 4. Health Check / Test Routes
 app.get("/", (req, res) => {
@@ -76,7 +47,7 @@ app.get("/test-db", async (req, res) => {
 });
 
 // 5. Server Listener
-const PORT = process.env.PORT || 1000;
+const PORT = process.env.PORT || 1000; // Render usually uses 1000 or 10000
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is live at port ${PORT}`);
