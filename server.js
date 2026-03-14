@@ -1,30 +1,27 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import morgan from "morgan"; // Para sa Professional Logging
-import { rateLimit } from "express-rate-limit"; // Para sa API Protection
+import morgan from "morgan"; 
+import { rateLimit } from "express-rate-limit"; 
 import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
-import aiRoutes from "./routes/ai.js";
+import aiRoutes from "./routes/ai.js"; // 👈 Dito naka-connect ang AI logic mo
 
-// 1. Load environment variables
 dotenv.config();
 
 const app = express();
 
-// --- 🌟 EXTRA CREDIT: REQUEST LOGGING (Morgan) ---
-// Mag-a-appear na sa terminal mo ang bawat request (e.g., GET /health 200)
+// --- 🌟 EXTRA CREDIT: REQUEST LOGGING ---
 app.use(morgan("dev")); 
 
 // --- 🌟 EXTRA CREDIT: RATE LIMITING ---
-// Proteksyon para hindi ma-spam ang API mo at ang Gemini API Key
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuto
-  max: 100, // Limitahan sa 100 requests bawat IP sa loob ng 15 mins
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
   message: { 
     error: "Too many requests from this IP, please try again after 15 minutes." 
   },
-  standardHeaders: true, // I-send ang rate limit info sa headers
+  standardHeaders: true, 
   legacyHeaders: false,
 });
 app.use(limiter);
@@ -48,7 +45,7 @@ app.get("/health", (req, res) => {
 
 // 4. Routes
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai", aiRoutes); // 👈 Siguraduhin na 'gemini-1.5-flash' ang nasa loob nito
 
 // Test Route para sa Database
 app.get("/test-db", async (req, res) => {
@@ -64,7 +61,6 @@ app.get("/", (req, res) => {
   res.send("✅ Backend is live and secured!");
 });
 
-// 5. Server Listener
 const PORT = process.env.PORT || 1000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Professional Server is live at port ${PORT}`);
