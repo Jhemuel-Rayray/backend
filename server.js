@@ -11,7 +11,6 @@ dotenv.config();
 const app = express();
 
 // 2. Middlewares
-// Explicitly allowing DELETE and OPTIONS for GitHub Pages compatibility
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -20,9 +19,31 @@ app.use(cors({
 
 app.use(express.json());
 
-// 3. Routes
+// 3. Routes (Yung mga existing routes mo)
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRoutes); // Inayos ang posisyon nito
+app.use("/api/ai", aiRoutes);
+
+// --- START NG DEBUG CODE NI SIR ---
+app.post("/mood", async (req, res) => {
+  console.log("POST /mood request received");
+  console.log("Request body:", req.body);
+
+  try {
+    const mood = req.body.mood;
+    // Tandaan: Siguraduhin na 'mood_log' ang table name mo sa DB
+    const [result] = await db.query(
+      "INSERT INTO mood_log (mood) VALUES (?)",
+      [mood]
+    );
+
+    console.log("Database insert result:", result);
+    res.json({ message: "Mood saved successfully" });
+  } catch (err) {
+    console.error("Debug Route Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+// --- END NG DEBUG CODE NI SIR ---
 
 // 4. Health Check / Test Routes
 app.get("/", (req, res) => {
@@ -47,7 +68,7 @@ app.get("/test-db", async (req, res) => {
 });
 
 // 5. Server Listener
-const PORT = process.env.PORT || 1000; // Render usually uses 1000 or 10000
+const PORT = process.env.PORT || 1000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is live at port ${PORT}`);
