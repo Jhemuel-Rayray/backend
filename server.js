@@ -11,6 +11,7 @@ dotenv.config();
 const app = express();
 
 // 2. Middlewares
+// Explicitly allowing DELETE and OPTIONS for GitHub Pages compatibility
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -19,40 +20,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// 3. Routes (Standard)
+// 3. Routes
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRoutes);
-
-// --- 🔴 START NG DEBUGGING SECTION (PART 1 - BUG #3) ---
-// Ginawa itong route na ito para sadyang mag-error nang hindi namamatay ang server.
-app.post("/mood", async (req, res) => {
-  console.log("POST /mood request received para sa debugging...");
-
-  try {
-    const mood = req.body.mood;
-
-    // 🔴 BUG #3: "mood_logs" (may 's') ang nilagay ko para mag-error. 
-    // Ang tamang table name ay "mood_log".
-    const [result] = await db.query(
-      "INSERT INTO mood_logs (mood) VALUES (?)", 
-      [mood]
-    );
-
-    res.json({ message: "Saved successfully!" });
-  } catch (err) {
-    // 📸 SCREENSHOT MO ITO: Ito yung lalabas sa Terminal/Render Logs
-    console.log("*****************************************");
-    console.error("❌ SQL ERROR FOUND:", err.message); 
-    console.log("*****************************************");
-
-    // I-send ang error sa frontend imbis na i-crash ang buong backend
-    res.status(500).json({ 
-      error: "Database Error: Table 'mood_logs' doesn't exist.",
-      details: err.message 
-    });
-  }
-});
-// --- 🔴 END NG DEBUGGING SECTION ---
+app.use("/api/ai", aiRoutes); // Inayos ang posisyon nito
 
 // 4. Health Check / Test Routes
 app.get("/", (req, res) => {
@@ -77,7 +47,7 @@ app.get("/test-db", async (req, res) => {
 });
 
 // 5. Server Listener
-const PORT = process.env.PORT || 1000;
+const PORT = process.env.PORT || 1000; // Render usually uses 1000 or 10000
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is live at port ${PORT}`);
