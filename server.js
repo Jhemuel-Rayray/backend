@@ -59,6 +59,19 @@ app.get("/test-db", async (req, res) => {
     res.status(500).json({ status: "Error", error: err.message });
   }
 });
+// --- 🌟 API ROOT ROUTE ---
+app.get("/api", (req, res) => {
+  res.json({
+    status: "Success",
+    message: "Welcome to My Mood App API",
+    endpoints: {
+      moods: "/api/moods",
+      ai: "/api/ai",
+      health: "/health"
+    },
+    version: "1.0.0"
+  });
+});
 
 app.get("/", (req, res) => {
   res.send("✅ Backend is live and secured!");
