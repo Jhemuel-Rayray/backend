@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    // Naka-parameterized query ito (Secure), pero sa POST tayo mag-tetest ng injection
+    // SECURE: Naka-parameterized na ito gamit ang [id]
     const [result] = await db.query("DELETE FROM mood_entries WHERE id = ?", [id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Reflection not found." });
@@ -38,7 +38,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 /**
- * ADD NEW MOOD (VULNERABLE VERSION - FOR STEP 1 TESTING)
+ * ADD NEW MOOD (SECURE VERSION - STEP 2 FIX)
  * Path: /api/moods
  */
 router.post("/", async (req, res) => {
@@ -49,13 +49,12 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // ❌ VULNERABLE: Ginamit ang string concatenation (+) sa halip na placeholders (?)
-    // Ito ang magpapahintulot sa SQL Injection attack
-    const query = "INSERT INTO mood_entries (user_id, mood_text) VALUES ('" + name + "', '" + reflection + "')";
+    // ✅ STEP 2 FIX: Ginamit ang placeholders (?) sa halip na string concatenation (+)
+    // Ito ay protektado na laban sa SQL Injection.
+    const query = "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)";
     
-    console.log("Executing Query:", query); // Makikita mo sa terminal kung paano nabago ang query ng input mo
-    
-    const [result] = await db.query(query);
+    // Ipinapasa ang values sa loob ng isang array bilang second argument
+    const [result] = await db.query(query, [name, reflection]);
     
     res.status(201).json({ 
       message: "Mood added successfully!",
@@ -63,8 +62,8 @@ router.post("/", async (req, res) => {
     });
   } catch (err) {
     console.error("Database Error:", err.message);
-    // Pinapakita natin ang exact error message para sa documentation ng Step 1
-    res.status(500).json({ error: "SQL Error: " + err.message });
+    // General error message para sa security
+    res.status(500).json({ error: "Could not save your reflection." });
   }
 });
 
