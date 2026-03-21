@@ -2,10 +2,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan"; 
+import helmet from "helmet"; 
 import { rateLimit } from "express-rate-limit"; 
 import { db } from "./db.js";
 import moodRoutes from "./routes/moods.js";
-import aiRoutes from "./routes/ai.js"; // 👈 Dito naka-connect ang AI logic mo
+import aiRoutes from "./routes/ai.js"; // ✅ FIXED: Base sa image_e27fc3.png, nasa /routes ito
 
 dotenv.config();
 
@@ -13,6 +14,9 @@ const app = express();
 
 // --- 🌟 EXTRA CREDIT: REQUEST LOGGING ---
 app.use(morgan("dev")); 
+
+// --- 🌟 SECURITY: HELMET ---
+app.use(helmet()); 
 
 // --- 🌟 EXTRA CREDIT: RATE LIMITING ---
 const limiter = rateLimit({
@@ -25,8 +29,6 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
-app.use(require("helmet")());
-
 
 app.use(cors({
   origin: [
@@ -36,19 +38,36 @@ app.use(cors({
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(express.json());
+
+// --- 🌟 API ROOT ROUTE ---
+// Ito ang mag-aayos sa "Cannot GET /api" (image_e199ae.png)
+app.get("/api", (req, res) => {
+  res.json({
+    status: "Success",
+    message: "Welcome to My Mood App API",
+    endpoints: {
+      moods: "/api/moods",
+      ai: "/api/ai",
+      health: "/health",
+      test_db: "/test-db"
+    },
+    version: "1.0.0"
+  });
+});
 
 // 3. PART 4: Health Check Endpoint
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
-    message: "API running professionally with Rate Limiting and Morgan"
+    message: "API running professionally with Rate Limiting, Helmet, and Morgan"
   });
 });
 
 // 4. Routes
 app.use("/api/moods", moodRoutes);
-app.use("/api/ai", aiRoutes); // 👈 Siguraduhin na 'gemini-1.5-flash' ang nasa loob nito
+app.use("/api/ai", aiRoutes); 
 
 // Test Route para sa Database
 app.get("/test-db", async (req, res) => {
@@ -58,19 +77,6 @@ app.get("/test-db", async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: "Error", error: err.message });
   }
-});
-// --- 🌟 API ROOT ROUTE ---
-app.get("/api", (req, res) => {
-  res.json({
-    status: "Success",
-    message: "Welcome to My Mood App API",
-    endpoints: {
-      moods: "/api/moods",
-      ai: "/api/ai",
-      health: "/health"
-    },
-    version: "1.0.0"
-  });
 });
 
 app.get("/", (req, res) => {
