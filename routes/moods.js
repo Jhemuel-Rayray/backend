@@ -9,11 +9,9 @@ const router = express.Router();
  */
 router.get("/", async (req, res) => {
   try {
-    // Aliasing user_id as full_name to match your Vue template requirements
     const [results] = await db.query(
       "SELECT id, user_id AS full_name, mood_text, created_at FROM mood_entries ORDER BY created_at DESC"
     );
-    
     res.json(results || []);
   } catch (err) {
     console.error("GET Error:", err.message);
@@ -28,22 +26,19 @@ router.get("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
+    // Naka-parameterized query ito (Secure), pero sa POST tayo mag-tetest ng injection
     const [result] = await db.query("DELETE FROM mood_entries WHERE id = ?", [id]);
-    
-    // Check if something was actually deleted
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Reflection not found." });
     }
-
     res.json({ message: "Reflection removed successfully" });
   } catch (err) {
-    console.error("DELETE Error:", err.message);
-    res.status(500).json({ error: "Could not delete the reflection from the database." });
+    res.status(500).json({ error: "Could not delete." });
   }
 });
 
 /**
- * ADD NEW MOOD
+ * ADD NEW MOOD (VULNERABLE VERSION - FOR STEP 1 TESTING)
  * Path: /api/moods
  */
 router.post("/", async (req, res) => {
@@ -54,10 +49,13 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const [result] = await db.query(
-      "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
-      [name, reflection]
-    );
+    // ❌ VULNERABLE: Ginamit ang string concatenation (+) sa halip na placeholders (?)
+    // Ito ang magpapahintulot sa SQL Injection attack
+    const query = "INSERT INTO mood_entries (user_id, mood_text) VALUES ('" + name + "', '" + reflection + "')";
+    
+    console.log("Executing Query:", query); // Makikita mo sa terminal kung paano nabago ang query ng input mo
+    
+    const [result] = await db.query(query);
     
     res.status(201).json({ 
       message: "Mood added successfully!",
@@ -65,14 +63,8 @@ router.post("/", async (req, res) => {
     });
   } catch (err) {
     console.error("Database Error:", err.message);
-    
-    if (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
-      return res.status(500).json({ 
-        error: "Database schema error: user_id must be VARCHAR, not INT." 
-      });
-    }
-
-    res.status(500).json({ error: "Could not save your reflection." });
+    // Pinapakita natin ang exact error message para sa documentation ng Step 1
+    res.status(500).json({ error: "SQL Error: " + err.message });
   }
 });
 
