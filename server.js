@@ -14,7 +14,6 @@ const app = express();
 // --- 🌟 EXTRA CREDIT: REQUEST LOGGING ---
 app.use(morgan("dev")); 
 
-/*
 // --- 🌟 EXTRA CREDIT: RATE LIMITING ---
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
@@ -26,7 +25,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
-*/
+
 
 app.use(cors({
   origin: [
