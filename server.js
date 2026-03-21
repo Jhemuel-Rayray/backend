@@ -26,13 +26,15 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// 2. Middlewares
+
 app.use(cors({
-  origin: "*", 
+  origin: [
+    "https://jhemuel-rayray.github.io",
+    "http://localhost:5173"
+  ],
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
 app.use(express.json());
 
 // 3. PART 4: Health Check Endpoint
