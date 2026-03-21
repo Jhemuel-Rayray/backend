@@ -43,17 +43,12 @@ app.use(express.json());
 
 // --- 🌟 API ROOT ROUTE ---
 // Ito ang mag-aayos sa "Cannot GET /api" (image_e199ae.png)
+// Ilagay ito bago ang app.use("/api/moods", ...)
 app.get("/api", (req, res) => {
-  res.json({
-    status: "Success",
-    message: "Welcome to My Mood App API",
-    endpoints: {
-      moods: "/api/moods",
-      ai: "/api/ai",
-      health: "/health",
-      test_db: "/test-db"
-    },
-    version: "1.0.0"
+  console.log("API root hit!"); // Lalabas ito sa Render logs
+  res.status(200).json({
+    message: "API is working!",
+    timestamp: new Date().toISOString()
   });
 });
 
